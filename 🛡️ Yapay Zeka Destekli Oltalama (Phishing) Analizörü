@@ -1,0 +1,6 @@
+Bu proje, Gemini AI kullanarak gelen mesajların veya e-postaların güvenliğini analiz eden bir siber güvenlik aracıdır.
+
+🚀 Özellikler
+- **Backend:** Python & FastAPI
+- **Yapay Zeka:** Google Gemini API
+- **Frontend:** HTML5 & CSS3
