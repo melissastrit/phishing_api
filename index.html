@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phishing Analizörü</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 600px; }
+        h2 { color: #2c3e50; text-align: center; margin-bottom: 20px; }
+        textarea { width: 100%; height: 120px; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; resize: vertical; box-sizing: border-box; margin-bottom: 20px; font-family: inherit; font-size: 15px; }
+        textarea:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
+        button { background-color: #3b82f6; color: white; border: none; padding: 14px 20px; border-radius: 8px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; transition: background 0.3s; }
+        button:hover { background-color: #2563eb; }
+        #result { margin-top: 20px; padding: 20px; border-radius: 8px; display: none; }
+        .high-risk { background-color: #fef2f2; border-left: 5px solid #ef4444; color: #991b1b; }
+        .medium-risk { background-color: #fffbeb; border-left: 5px solid #f59e0b; color: #b45309; }
+        .low-risk { background-color: #f0fdf4; border-left: 5px solid #22c55e; color: #166534; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; margin: 0 auto; display: none; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🛡️ Yapay Zeka Siber Güvenlik Analizi</h2>
+    <textarea id="emailText" placeholder="Şüpheli e-posta veya mesaj metnini buraya yapıştırın..."></textarea>
+    <button id="analyzeBtn" onclick="analyzeText()">Güvenliği Kontrol Et</button>
+    <div class="loader" id="loader"></div>
+    
+    <div id="result">
+        <h3 id="riskLevel" style="margin-top: 0;"></h3>
+        <p id="riskReason" style="margin-bottom: 0; line-height: 1.5;"></p>
+    </div>
+</div>
+
+<script>
+    async function analyzeText() {
+        const text = document.getElementById('emailText').value;
+        const resultDiv = document.getElementById('result');
+        const loader = document.getElementById('loader');
+        const btn = document.getElementById('analyzeBtn');
+
+        if (!text.trim()) {
+            alert("Lütfen analiz edilecek bir metin girin!");
+            return;
+        }
+
+        // Arayüzü yükleniyor moduna al
+        btn.style.display = 'none';
+        loader.style.display = 'block';
+        resultDiv.style.display = 'none';
+
+        try {
+            // Python Backend API'mize (FastAPI) veriyi gönderiyoruz
+            const response = await fetch('http://127.0.0.1:8000/analyze', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ text: text })
+            });
+
+            const data = await response.json();
+
+            if (data.hata) {
+                resultDiv.className = 'high-risk';
+                document.getElementById('riskLevel').innerText = "Hata!";
+                document.getElementById('riskReason').innerText = data.hata;
+            } else {
+                // Backend'den gelen JSON verisini okuyoruz
+                const analiz = data.analiz_sonucu;
+                const risk = analiz.risk_seviyesi;
+                const sebep = analiz.sebep;
+
+                document.getElementById('riskLevel').innerText = "Risk Seviyesi: " + risk;
+                document.getElementById('riskReason').innerText = sebep;
+
+                // Risk durumuna göre kutunun rengini (CSS sınıfını) değiştiriyoruz
+                const riskLower = risk.toLowerCase();
+                if (riskLower.includes("yüksek")) {
+                    resultDiv.className = 'high-risk';
+                } else if (riskLower.includes("orta")) {
+                    resultDiv.className = 'medium-risk';
+                } else {
+                    resultDiv.className = 'low-risk';
+                }
+            }
+            resultDiv.style.display = 'block';
+
+        } catch (error) {
+            resultDiv.className = 'high-risk';
+            document.getElementById('riskLevel').innerText = "Bağlantı Hatası!";
+            document.getElementById('riskReason').innerText = "Arka uç (Backend) sunucusuna ulaşılamadı. Python terminalinde Uvicorn'un çalıştığından emin olun.";
+            resultDiv.style.display = 'block';
+        } finally {
+            // Butonu tekrar görünür yuvicorn main:app --reloadap
+            btn.style.display = 'block';
+            loader.style.display = 'none';
+        }
+    }
+</script>
+
+</body>
+</html>
