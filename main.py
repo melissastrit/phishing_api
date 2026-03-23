@@ -49,18 +49,11 @@ def analyze_email(request: EmailRequest):
 
     try:
         # Yapay zekaya istek atarken "bana sadece JSON dön" kuralını ekliyoruz
-        response = client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-            ),
-        )
+       
+            response = model.generate_content(prompt)
+            yapay_zeka_json = json.loads(response.text)
         
-        # Gelen metni gerçek bir JSON (Python Dictionary) objesine çeviriyoruz
-        yapay_zeka_json = json.loads(response.text)
-        
-        return {
+            return {
             "orijinal_metin": request.text,
             "analiz_sonucu": yapay_zeka_json
         }
