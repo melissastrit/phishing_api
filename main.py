@@ -1,20 +1,17 @@
 import os
 import json
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import google.generativeai as genai
 from dotenv import load_dotenv
 
-# 1. Ayarları Yükle
 load_dotenv()
-API_KEY = os.getenv("GEMINI_API_KEY")
-genai.configure(api_key=API_KEY)
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 app = FastAPI()
 
-# 2. CORS (Frontend bağlantısı için)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -32,35 +29,18 @@ async def read_index():
 
 @app.post("/analyze")
 async def analyze_email(request: EmailRequest):
-    if not request.text:
-        return {"hata": "Metin boş olamaz."}
-
     try:
-        # DİKKAT: En garantili model isimlendirmesi budur
-        # Bu yöntem sürüm karmaşasını kökten çözer
-        model = genai.GenerativeModel(
-            model_name="gemini-1.5-flash",
-            generation_config={"response_mime_type": "application/json"}
-        )
-
+        model = genai.GenerativeModel('gemini-1.5-flash')
         prompt = f"""
-        Sen bir siber güvenlik uzmanısın. Aşağıdaki metni analiz et. 
-        SADECE JSON dön. Başka metin ekleme.
-        Format: {{"risk_seviyesi": "...", "sebep": "..."}}
-        
+        Şu metni siber güvenlik açısından analiz et. SADECE JSON formatında dön. Başka hiçbir kelime yazma.
+        Format: {{"risk_seviyesi": "Düşük/Orta/Yüksek", "sebep": "Açıklama..."}}
         Metin: "{request.text}"
         """
-
         response = model.generate_content(prompt)
         
-        # Markdown bloklarını temizleme (Hata önleyici)
+        # Markdown işaretlerini temizle
         raw_text = response.text.replace('```json', '').replace('```', '').strip()
-        result = json.loads(raw_text)
-
-        return {
-            "analiz_sonucu": result
-        }
+        return {"analiz_sonucu": json.loads(raw_text)}
 
     except Exception as e:
-        # Hata mesajını daha detaylı görelim
         return {"hata": f"Gemini Hatası: {str(e)}"}
