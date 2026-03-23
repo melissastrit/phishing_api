@@ -1,6 +1,7 @@
 import os
 import json
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import google.generativeai as genai
@@ -12,7 +13,9 @@ API_KEY = os.getenv("GEMINI_API_KEY")
 genai.configure(api_key=API_KEY)
 
 app = FastAPI()
-
+@app.get("/")
+async def read_index():
+    return FileResponse('index.html')
 # 1. CORS Ayarları (Frontend uygulamalarının bu API'ye erişmesine izin verir)
 app.add_middleware(
     CORSMiddleware,
