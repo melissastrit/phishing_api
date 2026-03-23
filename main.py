@@ -1,66 +1,62 @@
 import os
 import json
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from google import genai
-from google.genai import types
+import google.generativeai as genai
 from dotenv import load_dotenv
 
-# Şifremizi güvenle yüklüyoruz
+# 1. Ayarları Yükle
 load_dotenv()
 API_KEY = os.getenv("GEMINI_API_KEY")
-client = genai.Client(api_key=API_KEY)
+genai.configure(api_key=API_KEY)
 
 app = FastAPI()
 
-# 1. CORS Ayarları (Frontend uygulamalarının bu API'ye erişmesine izin verir)
+# 2. CORS (Frontend bağlantısı için)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Gerçek projelerde buraya sadece kendi sitemizin linki yazılır
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# 2. Pydantic Modeli (Gelecek verinin şablonunu ve kurallarını belirliyoruz)
 class EmailRequest(BaseModel):
     text: str
 
-@app.post("/analyze")
-def analyze_email(request: EmailRequest):
-    if not request.text:
-        return {"hata": "Lütfen analiz edilecek bir metin gönderin."}
+@app.get("/")
+async def read_index():
+    return FileResponse('index.html')
 
-    # 3. Prompt Engineering: Yapay zekayı bir JSON formatına zorluyoruz
-    prompt = f"""
-    Sen uzman bir siber güvenlik analistisin. Görevin aşağıda verilen metnin bir oltalama (phishing) veya dolandırıcılık girişimi olup olmadığını analiz etmektir.
-    Bana SADECE aşağıdaki JSON formatında cevap ver. Dışına hiçbir metin veya markdown işareti ekleme:
-    {{
-        "risk_seviyesi": "Düşük/Orta/Yüksek",
-        "sebep": "Neden bu puanı verdin? Şüpheli kısımlar neler?"
-    }}
-    
-    Analiz edilecek metin:
-    {request.text}
-    """
+@app.post("/analyze")
+async def analyze_email(request: EmailRequest):
+    if not request.text:
+        return {"hata": "Metin boş olamaz."}
 
     try:
-        # Yapay zekaya istek atarken "bana sadece JSON dön" kuralını ekliyoruz
-        response = client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-            ),
-        )
+        # DİKKAT: En garantili model isimlendirmesi budur
+        model = genai.GenerativeModel('gemini-1.5-flash')
+
+        prompt = f"""
+        Sen bir siber güvenlik uzmanısın. Aşağıdaki metni analiz et. 
+        SADECE JSON dön. Başka metin ekleme.
+        Format: {{"risk_seviyesi": "...", "sebep": "..."}}
         
-        # Gelen metni gerçek bir JSON (Python Dictionary) objesine çeviriyoruz
-        yapay_zeka_json = json.loads(response.text)
+        Metin: "{request.text}"
+        """
+
+        response = model.generate_content(prompt)
         
+        # Markdown bloklarını temizleme (Hata önleyici)
+        raw_text = response.text.replace('```json', '').replace('```', '').strip()
+        result = json.loads(raw_text)
+
         return {
-            "orijinal_metin": request.text,
-            "analiz_sonucu": yapay_zeka_json
+            "analiz_sonucu": result
         }
+
     except Exception as e:
-        return {"hata": f"Sistem Hatası: {str(e)}"}
+        # Hata mesajını daha detaylı görelim
+        return {"hata": f"Gemini Hatası: {str(e)}"}
