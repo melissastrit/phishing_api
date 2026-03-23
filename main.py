@@ -37,7 +37,11 @@ async def analyze_email(request: EmailRequest):
 
     try:
         # DİKKAT: En garantili model isimlendirmesi budur
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        # Bu yöntem sürüm karmaşasını kökten çözer
+        model = genai.GenerativeModel(
+            model_name="gemini-1.5-flash",
+            generation_config={"response_mime_type": "application/json"}
+        )
 
         prompt = f"""
         Sen bir siber güvenlik uzmanısın. Aşağıdaki metni analiz et. 
