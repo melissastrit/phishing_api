@@ -3,14 +3,13 @@ import json
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from google import genai
-from google.genai import types
+import google.generativeai as genai
 from dotenv import load_dotenv
 
 # Şifremizi güvenle yüklüyoruz
 load_dotenv()
 API_KEY = os.getenv("GEMINI_API_KEY")
-client = genai.Client(api_key=API_KEY)
+genai.configure(api_key=API_KEY)
 
 app = FastAPI()
 
