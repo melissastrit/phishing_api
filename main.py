@@ -33,7 +33,8 @@ class EmailRequest(BaseModel):
 def analyze_email(request: EmailRequest):
     if not request.text:
         return {"hata": "Lütfen analiz edilecek bir metin gönderin."}
-
+# Modeli burada, fonksiyonun tam içinde tanımlayalım
+    model = genai.GenerativeModel('gemini-1.5-flash')
     # 3. Prompt Engineering: Yapay zekayı bir JSON formatına zorluyoruz
     prompt = f"""
     Sen uzman bir siber güvenlik analistisin. Görevin aşağıda verilen metnin bir oltalama (phishing) veya dolandırıcılık girişimi olup olmadığını analiz etmektir.
