@@ -1,12 +1,20 @@
-#🛡️ Yapay Zeka Destekli Phishing (Oltalama) Analizörü
+# 🛡️ Yapay Zeka Destekli Phishing (Oltalama) Analizörü
 
-Bu proje, kullanıcılardan alınan şüpheli metinleri Google Gemini 1.5 Flash yapay zeka modelini kullanarak analiz eden ve siber güvenlik açısından değerlendiren bir web uygulamasıdır.
+Bu proje, kullanıcılardan alınan şüpheli e-postaları ve metinleri **Meta Llama 3 (Groq API)** altyapısını kullanarak saniyeler içinde analiz eden, yüksek performanslı bir siber güvenlik web servisidir (API). 
 
-##🚀 Teknolojiler
-- **Backend:** Python & FastAPI
-- **AI:** Google Gemini API
-- **Frontend:** HTML5 & CSS3
-- **Deployment:** Render
+Canlı ortamdaki stabilite ve yanıt süresini (latency) optimize etmek amacıyla, mimaride saniyede yüzlerce token üretebilen **Groq** kullanılmıştır.
 
-##🌍 Canlı Demo
-Uygulamayı buradan deneyebilirsiniz: [https://phishing-api-aa1j.onrender.com/]
+## 🚀 Teknolojiler
+- **Backend:** Python, FastAPI, Uvicorn
+- **AI Engine:** Groq API (Llama-3.1-8b-instant)
+- **Frontend:** HTML5, CSS3, JavaScript
+- **Deployment & Hosting:** Render
+
+## 🌐 Canlı Demo
+Uygulamanın çalışan haline buradan ulaşabilir ve test edebilirsiniz: 
+🔗 [Phishing Analizörü Canlı Demo](https://phishing-api-aa1j.onrender.com/)
+
+## ⚙️ Nasıl Çalışır?
+Kullanıcı metni gönderdiğinde, sistem arka planda Llama 3 modeline özel bir siber güvenlik "prompt"u gönderir. Model metni analiz eder ve diğer uygulamaların da kolayca tüketebileceği standart bir **JSON** formatında sonuç döner:
+1. **Risk Seviyesi** (Düşük / Orta / Yüksek)
+2. **Sebep** (Şüpheli unsurların detaylı açıklaması)
